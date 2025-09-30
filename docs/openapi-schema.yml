@@ -1,25 +1,46 @@
 openapi: 3.0.2
 info:
-  title: 'Foodgram'
-  version: ''
+  title: 'Foodgram API'
+  x-summary: 'Foodgram API v1 — рецепты, избранное, корзина; contract v1 — FROZEN.'
+  description: |
+    Foodgram API v1 — стабильный контракт для работы с пользователями, рецептами, тегами,
+    ингредиентами, подписками и списком покупок (экспорт в файл).
+
+    **Основные возможности:**  
+    - Список/поиск рецептов (фильтры по тегам, автору, избранному, корзине)  
+    - Управление избранным и корзиной  
+    - Экспорт списка покупок (TXT/PDF/CSV)  
+    - Справочники тегов и ингредиентов  
+    - Профили пользователей, текущий пользователь, подписки
+  version: '1.0.0'
+servers:
+  - url: /
+    description: Same-origin (reverse proxy)
+  - url: http://127.0.0.1:8000/api
+    description: Local development
+  - url: https://foodgram.example.org/api
+    description: Production
+tags:
+  - name: Пользователи
+    description: Работа с пользователями и профилями
+  - name: Рецепты
+    description: Каталог рецептов, избранное и корзина
+  - name: Теги
+    description: Справочник тегов
+  - name: Ингредиенты
+    description: Справочник ингредиентов
+  - name: Подписки
+    description: Подписки на авторов
+  - name: Список покупок
+    description: Экспорт и управление корзиной покупок
 paths:
   /api/users/:
     get:
       operationId: Список пользователей
       description: ''
       parameters:
-        - name: page
-          required: false
-          in: query
-          description: Номер страницы.
-          schema:
-            type: integer
-        - name: limit
-          required: false
-          in: query
-          description: Количество объектов на странице.
-          schema:
-            type: integer
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
       responses:
         '200':
           content:
@@ -54,6 +75,7 @@ paths:
     post:
       operationId: Регистрация пользователя
       description: ''
+      security: []
       parameters: []
       requestBody:
         content:
@@ -75,6 +97,7 @@ paths:
     get:
       operationId: Cписок тегов
       description: ''
+      security: []
       parameters: []
       responses:
         '200':
@@ -91,13 +114,14 @@ paths:
     get:
       operationId: Получение тега
       description: ''
+      security: []
       parameters:
         - name: id
           in: path
           required: true
           description: "Уникальный идентификатор этого Тега."
           schema:
-            type: string
+            type: integer
       responses:
         '200':
           content:
@@ -113,19 +137,10 @@ paths:
     get:
       operationId: Список рецептов
       description: Страница доступна всем пользователям. Доступна фильтрация по избранному, автору, списку покупок и тегам.
+      security: []
       parameters:
-        - name: page
-          required: false
-          in: query
-          description: Номер страницы.
-          schema:
-            type: integer
-        - name: limit
-          required: false
-          in: query
-          description: Количество объектов на странице.
-          schema:
-            type: integer
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
         - name: is_favorited
           required: false
           in: query
@@ -147,15 +162,15 @@ paths:
           schema:
             type: integer
         - name: tags
-          required: false
           in: query
-          description: Показывать рецепты только с указанными тегами (по slug)
-          example: 'lunch&tags=breakfast'
-
+          description: Список slug тегов (повторяемый параметр)
+          required: false
           schema:
             type: array
-            items:
-              type: string
+            items: { type: string }
+          style: form
+          explode: true
+          example: ["breakfast","lunch"]
       responses:
         '200':
           content:
@@ -184,12 +199,11 @@ paths:
                     items:
                       $ref: '#/components/schemas/RecipeList'
                     description: 'Список объектов текущей страницы'
-          description: ''
       tags:
         - Рецепты
     post:
       security:
-        - Token: []
+        - TokenAuth: []
       operationId: Создание рецепта
       description: 'Доступно только авторизованному пользователю'
       parameters: []
@@ -206,13 +220,9 @@ paths:
                 $ref: '#/components/schemas/RecipeList'
           description: 'Рецепт успешно создан'
         '400':
-          description: 'Ошибки валидации в стандартном формате DRF'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ValidationError'
+          $ref: '#/components/responses/ValidationError'
         '401':
-          $ref: '#/components/schemas/AuthenticationError'
+          $ref: '#/components/responses/AuthenticationError'
         '404':
           $ref: '#/components/responses/NotFound'
       tags:
@@ -220,7 +230,7 @@ paths:
   /api/recipes/download_shopping_cart/:
     get:
       security:
-        - Token: [ ]
+        - TokenAuth: [ ]
       operationId: Скачать список покупок
       description: 'Скачать файл со списком покупок. Это может быть TXT/PDF/CSV. Важно, чтобы контент файла удовлетворял требованиям задания. Доступно только авторизованным пользователям.'
       parameters: []
@@ -244,13 +254,14 @@ paths:
     get:
       operationId: Получение рецепта
       description: ''
+      security: []
       parameters:
         - name: id
           in: path
           required: true
           description: "Уникальный идентификатор этого рецепта"
           schema:
-            type: string
+            type: integer
       responses:
         '200':
           content:
@@ -258,12 +269,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/RecipeList'
           description: ''
+        '404':
+          $ref: '#/components/responses/NotFound'
       tags:
         - Рецепты
     patch:
       operationId: Обновление рецепта
       security:
-        - Token: [ ]
+        - TokenAuth: [ ]
       description: 'Доступно только автору данного рецепта'
       parameters:
         - name: id
@@ -271,7 +284,7 @@ paths:
           required: true
           description: "Уникальный идентификатор этого рецепта."
           schema:
-            type: string
+            type: integer
       requestBody:
         content:
           application/json:
@@ -299,14 +312,14 @@ paths:
 
       description: 'Доступно только автору данного рецепта'
       security:
-        - Token: [ ]
+        - TokenAuth: [ ]
       parameters:
         - name: id
           in: path
           required: true
           description: "Уникальный идентификатор этого рецепта"
           schema:
-            type: string
+            type: integer
       responses:
         '204':
           description: 'Рецепт успешно удален'
@@ -323,14 +336,14 @@ paths:
       operationId: Добавить рецепт в избранное
       description: 'Доступно только авторизованному пользователю.'
       security:
-        - Token: [ ]
+        - TokenAuth: [ ]
       parameters:
         - name: id
           in: path
           required: true
           description: "Уникальный идентификатор этого рецепта"
           schema:
-            type: string
+            type: integer
       responses:
         '201':
           content:
@@ -353,14 +366,14 @@ paths:
       operationId: Удалить рецепт из избранного
       description: 'Доступно только авторизованным пользователям'
       security:
-        - Token: [ ]
+        - TokenAuth: [ ]
       parameters:
         - name: id
           in: path
           required: true
           description: "Уникальный идентификатор этого рецепта."
           schema:
-            type: string
+            type: integer
       responses:
         '204':
           description: 'Рецепт успешно удален из избранного'
@@ -379,21 +392,20 @@ paths:
       operationId: Добавить рецепт в список покупок
       description: 'Доступно только авторизованным пользователям'
       security:
-        - Token: [ ]
+        - TokenAuth: [ ]
       parameters:
         - name: id
           in: path
           required: true
           description: "Уникальный идентификатор этого рецепта."
           schema:
-            type: string
+            type: integer
       responses:
         '201':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RecipeMinified'
-          description: 'Рецепт успешно добавлен в список покупок'
         '400':
           description: 'Ошибка добавления в список покупок (Например, когда рецепт уже есть в списке покупок)'
           content:
@@ -408,14 +420,14 @@ paths:
       operationId: Удалить рецепт из списка покупок
       description: 'Доступно только авторизованным пользователям'
       security:
-        - Token: [ ]
+        - TokenAuth: [ ]
       parameters:
         - name: id
           in: path
           required: true
           description: "Уникальный идентификатор этого рецепта."
           schema:
-            type: string
+            type: integer
       responses:
         '204':
           description: 'Рецепт успешно удален из списка покупок'
@@ -433,15 +445,14 @@ paths:
     get:
       operationId: Профиль пользователя
       description: 'Доступно всем пользователям.'
-      security:
-        - Token: [ ]
+      security: []
       parameters:
         - name: id
           in: path
           required: true
           description: "Уникальный id этого пользователя"
           schema:
-            type: string
+            type: integer
       responses:
         '200':
           content:
@@ -451,8 +462,6 @@ paths:
           description: ''
         '404':
           $ref: '#/components/responses/NotFound'
-        '401':
-          $ref: '#/components/responses/AuthenticationError'
       tags:
         - Пользователи
   /api/users/me/:
@@ -461,7 +470,7 @@ paths:
       description: ''
       parameters: []
       security:
-        - Token: [ ]
+        - TokenAuth: [ ]
       responses:
         '200':
           content:
@@ -478,19 +487,9 @@ paths:
       operationId: Мои подписки
       description: 'Возвращает пользователей, на которых подписан текущий пользователь. В выдачу добавляются рецепты.'
       parameters:
-        - name: page
-          required: false
-          in: query
-          description: Номер страницы.
-          schema:
-            type: integer
-        - name: limit
-          required: false
-          in: query
-          description: Количество объектов на странице.
-          schema:
-            type: integer
-        - name: recipes_limit
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/RecipesLimit'
           required: false
           in: query
           description: Количество объектов внутри поля recipes.
@@ -523,7 +522,6 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/UserWithRecipes'
-                    description: 'Список объектов текущей страницы'
           description: ''
         '401':
           $ref: '#/components/responses/AuthenticationError'
@@ -534,20 +532,15 @@ paths:
       operationId: Подписаться на пользователя
       description: 'Доступно только авторизованным пользователям'
       security:
-        - Token: [ ]
+        - TokenAuth: [ ]
       parameters:
         - name: id
           in: path
           required: true
           description: "Уникальный идентификатор этого пользователя."
           schema:
-            type: string
-        - name: recipes_limit
-          required: false
-          in: query
-          description: Количество объектов внутри поля recipes.
-          schema:
             type: integer
+        - $ref: '#/components/parameters/RecipesLimit'
       responses:
         '201':
           content:
@@ -571,14 +564,14 @@ paths:
       operationId: Отписаться от пользователя
       description: 'Доступно только авторизованным пользователям'
       security:
-        - Token: [ ]
+        - TokenAuth: [ ]
       parameters:
         - name: id
           in: path
           required: true
           description: "Уникальный идентификатор этого пользователя."
           schema:
-            type: string
+            type: integer
       responses:
         '204':
           description: 'Успешная отписка'
@@ -599,6 +592,7 @@ paths:
     get:
       operationId: Список ингредиентов
       description: 'Список ингредиентов с возможностью поиска по имени.'
+      security: []
       parameters:
         - name: name
           required: false
@@ -621,6 +615,7 @@ paths:
     get:
       operationId: Получение ингредиента
       description: 'Уникальный идентификатор этого ингредиента.'
+      security: []
       parameters:
         - name: id
           in: path
@@ -634,7 +629,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Ingredient'
-          description: ''
+        '404':
+          $ref: '#/components/responses/NotFound'
       tags:
         - Ингредиенты
   /api/users/set_password/:
@@ -660,6 +656,7 @@ paths:
     post:
       operationId: Получить токен авторизации
       description: Используется для авторизации по емейлу и паролю, чтобы далее использовать токен при запросах.
+      security: []
       parameters: []
       requestBody:
         content:
@@ -679,6 +676,8 @@ paths:
     post:
       operationId: Удаление токена
       description: Удаляет токен текущего пользователя
+      security: 
+        - TokenAuth: []
       parameters: []
       requestBody:
         content:
@@ -827,7 +826,7 @@ components:
           description: 'Ссылка на картинку на сайте'
           example: 'http://foodgram.example.org/media/recipes/images/image.jpeg'
           type: string
-          format: url
+          format: uri
         text:
           description: 'Описание'
           type: string
@@ -859,7 +858,7 @@ components:
           description: 'Ссылка на картинку на сайте'
           example: 'http://foodgram.example.org/media/recipes/images/image.jpeg'
           type: string
-          format: url
+          format: uri
         cooking_time:
           description: 'Время приготовления (в минутах)'
           type: integer
@@ -1043,6 +1042,7 @@ components:
           type: string
         email:
           type: string
+      required: [email, password]
     TokenGetResponse:
       type: object
       properties:
@@ -1082,7 +1082,6 @@ components:
           description: 'Картинка, закодированная в Base64'
           example: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg=='
           type: string
-          format: binary
         name:
           description: 'Название'
           type: string
@@ -1161,16 +1160,16 @@ components:
           description: 'Описание ошибки'
           example: "Страница не найдена."
           type: string
-
   responses:
     ValidationError:
-      description: 'Ошибки валидации в стандартном формате DRF'
+      description: Ошибки валидации в стандартном формате DRF
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ValidationError'
+
     NestedValidationError:
-      description: 'Ошибки валидации в стандартном формате DRF, в том числе с внутренними элементами.'
+      description: Ошибки валидации DRF с вложенными элементами
       content:
         application/json:
           schema:
@@ -1198,11 +1197,41 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/NotFound'
-
-
+  parameters:
+    Page:
+      name: page
+      in: query
+      description: Номер страницы
+      required: false
+      schema: { type: integer, minimum: 1 }
+      example: 2
+    Limit:
+      name: limit
+      in: query
+      description: Количество объектов на странице
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 100 }
+      example: 20
+    RecipesLimit:
+      name: recipes_limit
+      in: query
+      description: Количество рецептов во вложенном поле `recipes`
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 50 }
+      example: 3
+    PathIdInt:
+      name: id
+      in: path
+      required: true
+      description: Уникальный идентификатор ресурса
+      schema: { type: integer }
   securitySchemes:
-    Token:
-      description: 'Авторизация по токену. <br>
-      Все запросы от имени пользователя должны выполняться с заголовком "Authorization: Token TOKENVALUE"'
-      type: http
-      scheme: token
+    TokenAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: |
+        Используйте заголовок:
+        Authorization: Token <auth_token>
+security:
+- TokenAuth: []

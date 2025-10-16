@@ -12,7 +12,7 @@
 ---
 
 ## Ingredient  → SA: `ingredient`
-**PK:** `id BIGINT SERIAL`  
+**PK:** `id BIGINT SERIAL`
 **Поля:**
 - `name: VARCHAR(200) NOT NULL` (`db_index=True`)
 - `measurement_unit: VARCHAR(200) NOT NULL`
@@ -31,10 +31,10 @@
 ---
 
 ## Tag  → SA: `tag`
-**PK:** `id BIGINT SERIAL`  
+**PK:** `id BIGINT SERIAL`
 **Поля:**
 - `name: VARCHAR(200) NOT NULL UNIQUE` (`db_index=True`)
-- `color: VARCHAR(7) NOT NULL UNIQUE`  *(HEX, формат не проверяется на уровне БД — проверка в схеме/валидаторе)*  
+- `color: VARCHAR(7) NOT NULL UNIQUE`  *(HEX, формат не проверяется на уровне БД — проверка в схеме/валидаторе)*
 - `slug: VARCHAR(?) NOT NULL UNIQUE` *(длина как в Django SlugField — обычно 50/200; возьмём 200 для совместимости)*
 - `created: TIMESTAMPTZ NOT NULL DEFAULT now()`
 - `updated: TIMESTAMPTZ NOT NULL DEFAULT now() ON UPDATE now()`
@@ -49,7 +49,7 @@
 ---
 
 ## Recipe  → SA: `recipe`
-**PK:** `id BIGINT SERIAL`  
+**PK:** `id BIGINT SERIAL`
 **Поля:**
 - `author_id: BIGINT NOT NULL` → FK `user.id` `ondelete='CASCADE'`
 - `name: VARCHAR(200) NOT NULL`
@@ -77,7 +77,7 @@
 ## RecipeIngredientAmount (through)  → SA: `recipe_ingredient_amount`
 **Роль:** связующая таблица M2M `recipe` ↔ `ingredient` с атрибутом `amount`.
 
-**PK:** `id BIGINT SERIAL`  
+**PK:** `id BIGINT SERIAL`
 **Поля:**
 - `ingredient_id: BIGINT NOT NULL` → FK `ingredient.id` `ondelete='CASCADE'`
 - `recipe_id: BIGINT NOT NULL` → FK `recipe.id` `ondelete='CASCADE'`
@@ -108,7 +108,7 @@
 ---
 
 ## Favorite  → SA: `favorite`
-**PK:** `id BIGINT SERIAL`  
+**PK:** `id BIGINT SERIAL`
 **Поля:**
 - `user_id: BIGINT NOT NULL` → FK `user.id` `ondelete='CASCADE'`
 - `recipe_id: BIGINT NOT NULL` → FK `recipe.id` `ondelete='CASCADE'`
@@ -123,7 +123,7 @@
 ---
 
 ## ShoppingCart  → SA: `shopping_cart`
-**PK:** `id BIGINT SERIAL`  
+**PK:** `id BIGINT SERIAL`
 **Поля:**
 - `user_id: BIGINT NOT NULL` → FK `user.id` `ondelete='CASCADE'`
 - `recipe_id: BIGINT NOT NULL` → FK `recipe.id` `ondelete='CASCADE'`
@@ -138,7 +138,7 @@
 ---
 
 ## User  → SA: `user`
-**PK:** `id BIGINT SERIAL`  
+**PK:** `id BIGINT SERIAL`
 **Поля:**
 - `first_name: VARCHAR(200) NULL`
 - `last_name: VARCHAR(200) NULL`
@@ -155,7 +155,7 @@
 ---
 
 ## Follow  → SA: `follow`
-**PK:** `id BIGINT SERIAL`  
+**PK:** `id BIGINT SERIAL`
 **Поля:**
 - `user_id: BIGINT NOT NULL` → FK `user.id` `ondelete='CASCADE'`  *(подписчик)*
 - `following_id: BIGINT NOT NULL` → FK `user.id` `ondelete='CASCADE'`  *(автор/кем подписан)*
@@ -172,10 +172,10 @@
 ---
 
 ## Заметки по Alembic (минимум)
-1) **Миграция #001 (база):** `user`, `ingredient`, `tag`.  
-2) **Миграция #002:** `recipe` (FK → `user`), `recipe_ingredient_amount` (FK → `recipe`,`ingredient`), `recipe_tag`.  
-3) **Миграция #003:** `favorite`, `shopping_cart`, `follow`.  
-4) **Сиды:** загрузить `ingredient` из `data/ingredients.json` после миграции #001 (скрипт/команда).  
+1) **Миграция #001 (база):** `user`, `ingredient`, `tag`.
+2) **Миграция #002:** `recipe` (FK → `user`), `recipe_ingredient_amount` (FK → `recipe`,`ingredient`), `recipe_tag`.
+3) **Миграция #003:** `favorite`, `shopping_cart`, `follow`.
+4) **Сиды:** загрузить `ingredient` из `data/ingredients.json` после миграции #001 (скрипт/команда).
 5) **Индексы/чек-констрейнты:** включены в соответствующие миграции; для `updated` можно добавить `ON UPDATE` через триггер/генерируемую колонку, либо обновлять на уровне приложения (решение за проектом).
 
 ---

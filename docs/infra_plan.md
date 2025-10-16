@@ -18,7 +18,7 @@
 
 ### nginx (reverse proxy + статика)
 - Образ: `nginx:1.19.3` (реком. обновить), порт **80:80**.
-- Тома: 
+- Тома:
   - `./nginx.conf:/etc/nginx/conf.d/default.conf`
   - `../frontend/build:/usr/share/nginx/html/`
   - `../docs/:/usr/share/nginx/html/api/docs/`

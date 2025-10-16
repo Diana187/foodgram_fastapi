@@ -9,7 +9,7 @@
 
 - Тип: **TokenAuthentication (DRF authtoken)**
 - Логин по: **email**
-- Токен передаётся в заголовке  
+- Токен передаётся в заголовке
   `Authorization: Token <token>`
 - Логика — через **Djoser** (`djoser.urls`, `djoser.urls.authtoken`)
 

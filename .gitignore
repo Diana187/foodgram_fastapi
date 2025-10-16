@@ -1,0 +1,39 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# --- Virtual env ---
+.venv/
+venv/
+
+# --- Poetry / Pip ---
+poetry.lock
+*.egg-info/
+dist/
+build/
+
+# --- Environment variables ---
+.env
+.env.*
+
+# --- IDE and OS files ---
+.idea/
+.vscode/
+*.DS_Store
+Thumbs.db
+
+# --- Test / coverage ---
+.coverage
+htmlcov/
+.pytest_cache/
+
+# --- MyPy / Ruff / Black caches ---
+.mypy_cache/
+.ruff_cache/
+.black_cache/
+
+# --- Alembic migrations cache (if any temp) ---
+alembic.ini  # если ты хранишь alembic.ini отдельно

@@ -19,8 +19,6 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies: []
-        env:
-          MYPY_FORCE_PURE_PYTHON: "1"
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
